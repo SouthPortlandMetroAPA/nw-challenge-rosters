@@ -1042,13 +1042,15 @@ body {
       ) + '" data-flight="' + flightCls + '">' +
       '<div class="card-header">' +
         '<span class="seed-badge">#' + (idx + 1) + '</span>' +
-        '<span class="team-name">' + esc(team.name) + '</span>' +
-        '<span class="flight-badge ' + flightCls + '">' + flightLabel + '</span>' +
+        '<span class="team-name">' + esc(team.name) +
+          ' <span class="flight-badge ' + flightCls + '">' + flightLabel + '</span>' +
+        '</span>' +
+        '<span class="sl-badge" style="background:' + slColor(team.totalSL) + '">SL ' + team.totalSL + '</span>' +
       '</div>' +
       '<div class="card-players">' +
-        '<span class="player-name">' + esc(team.p1) + '<span class="player-sl"> SL' + esc(team.p1sl) + '</span></span>' +
-        '<span class="player-name">' + esc(team.p2) + '<span class="player-sl"> SL' + esc(team.p2sl) + '</span></span>' +
-        '<span class="player-name">' + esc(team.p3) + '<span class="player-sl"> SL' + esc(team.p3sl) + '</span></span>' +
+        '<span class="player-name">' + esc(team.p1) + ' <span class="player-sl">SL ' + esc(team.p1sl) + '</span></span>' +
+        '<span class="player-name">' + esc(team.p2) + ' <span class="player-sl">SL ' + esc(team.p2sl) + '</span></span>' +
+        '<span class="player-name">' + esc(team.p3) + ' <span class="player-sl">SL ' + esc(team.p3sl) + '</span></span>' +
       '</div>' +
     '</div>';
   }
