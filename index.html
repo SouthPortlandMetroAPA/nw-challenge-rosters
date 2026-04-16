@@ -306,6 +306,56 @@ body {
 }
 
 /* ==========================================================================
+   Flight badges (3-Person Team)
+   ========================================================================== */
+.flight-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.flight-badge.early { background: #1b5e20; color: #c8e6c9; }
+.flight-badge.late { background: #1a237e; color: #c5cae9; }
+
+/* Flight filter pills */
+.flight-filter {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.flight-pill {
+  min-height: 36px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.flight-pill:hover { background: #faf8f3; }
+.flight-pill.active {
+  background: var(--primary);
+  border-color: var(--primary-dark);
+  color: #000;
+}
+
+/* Player SL in 3-person cards */
+.player-sl {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-left: 6px;
+}
+
+/* ==========================================================================
    Coming Soon Placeholder
    ========================================================================== */
 .placeholder {
@@ -413,11 +463,16 @@ body {
      3-Person Panel
      ==================================================================== -->
 <section class="tab-panel" id="panel-3-person" role="tabpanel" aria-labelledby="tab-3-person">
-  <div class="placeholder">
-    <div class="placeholder-icon" aria-hidden="true">&#127993;</div>
-    <h2>3-Person Team</h2>
-    <p>Rosters coming soon. Check back later!</p>
+  <div class="toolbar">
+    <input type="text" class="search-box" id="search-3-person" placeholder="Search team or player...">
+    <div class="flight-filter">
+      <button type="button" class="flight-pill active" data-flight="all" onclick="filter3P('all',this)">All</button>
+      <button type="button" class="flight-pill" data-flight="early" onclick="filter3P('early',this)">Early Flight</button>
+      <button type="button" class="flight-pill" data-flight="late" onclick="filter3P('late',this)">Late Flight</button>
+    </div>
+    <span class="team-count" id="count-3-person"></span>
   </div>
+  <div class="card-grid" id="grid-3-person"></div>
 </section>
 
 <!-- ====================================================================
@@ -793,11 +848,258 @@ body {
   });
 
   /* =====================================================================
+     3-PERSON TEAM DATA
+     Format: flight\tteamName\tp1Name\tp1SL\tp2Name\tp2SL\tp3Name\tp3SL
+     ===================================================================== */
+  var RAW_3_PERSON = [
+    'Early\tDon\'t Give Two Clucks\tKaren Dhaliwal\t3\tChristian Zarate\t7\tDoug McKnight\t4',
+    'Late\tMom & the kids\tAJ Price\t7\tCaylie Parker\t4\tStacey Parker\t3',
+    'Early\tBrown chicken, brown cow\tDan Kwiecien\t7\tAndy Collins\t4\tSteven Yu\t5',
+    'Early\tOutlaws\tPhillip Segura\t4\tBill Berggren\t4\tEric Harmon\t5',
+    'Early\tThree balls,One Cue\tJason Overland\t7\tMike Nash\t5\tNaoko reynolds\t3',
+    'Early\tEracktile Dysfunction\tMatt Kruse\t4\tKim Kruse\t3\tPatrick Stalnaker\t7',
+    'Early\tChina house\tHoward\t6\tFred Brayton\t5\tDaniel Frank\t4',
+    'Late\tThem Again\tJimmy Arellanes\t7\tTerri Riley\t5\tEric Stewart\t5',
+    'Late\tDuck duck goose\tWendy curtis\t4\tGlen Curtis\t5\tJames Johnson\t6',
+    'Early\tRacky Balboa\tMichael Fisher\t5\tJared Cornman\t4\tTimothy Garland\t5',
+    'Early\tDo Better!\tJessica Tanabe\t4\tJim Seefurth\t6\tPhanindra reddy Madduru\t5',
+    'Early\tShe Made Me Do It\tNancy lockwood\t4\tKris Leistritz\t4\tChristine chandler\t5',
+    'Late\tBourbon Legends\tRyan Nehnke\t6\tJoyce Ferguson\t4\tBrian Daniels\t4',
+    'Early\tCueing Up Trouble\tCherie Gentry\t3\tGordon Gentry\t2\tTyler Clement\t3',
+    'Early\tRenegade\'s\tScott Ruegsegger\t6\tSarah Burr Allison\t5\tKen Lester\t5',
+    'Early\tFish Stix\tMatthew Fisher\t5\tRob Ray\t3\tChad Garber\t4',
+    'Late\tClam Trap\tDana German\t5\tJennifer Giller\t6\tKatelyn Cureton\t3',
+    'Late\tRun Em Out\tMickey Restivo\t6\tPetra Moser\t4\tJoe Cathey\t5',
+    'Early\tWe\'ll take it\tKen Talbert\t6\tCody McGlin\t4\tCourtney Talbert\t2',
+    'Late\tTable Time Trio\tDustin Wyatt\t6\tKathy Koren\t5\tKevin Haevischer\t3',
+    'Early\tBrothers of the Felt\tDavid Maynard\t6\tNathan Scott\t5\tJames Hooper\t4',
+    'Late\tTHE RENEGADES\tRANDY RUEGSEGGER\t6\tBOB GEORGE\t5\tDANNY MOITKE\t5',
+    'Late\tSmooth Stroke\tJeff Braun\t6\tJake Braun\t3\tDaniell pranz\t4',
+    'Early\tShenanigans\tScott Fukuda\t5\tStacie Jackson\t3\tLerrick Solonga\t7',
+    'Late\tPhil\'s Worst Nightmare\tMelanie Hooper\t3\tPhilip Hupp\t7\tJen Sevilla\t3',
+    'Late\tCharlies Angels\tCharlie Roberts\t6\tSheri Roberts\t4\tCheyenne Mackenzie\t3',
+    'Early\tTony Who\tAprile Hall\t3\tJessica Nikolas\t4\tTammy Shepherd\t5',
+    'Early\tToo Soon Trifecta\tCainan Mullins\t7\tCarl McCauley\t4\tLisa Stirgus\t2',
+    'Early\tRocinante\tLidiya Astapchuk\t4\tRenat Valiullin\t6\tArtiom Salamatin\t5',
+    'Late\tCuebacca\tKatie Meyer\t2\tJohn Lamb\t4\tMatt Terasaki\t6',
+    'Early\tToo Soon Trilogy\tAaron Donaldson\t5\tRichard Stirgus\t4\tKacie Bray\t3',
+    'Early\tThree Amigos\tRajeev Goonie\t5\tAlex Sherry\t6\tKaitlyn Cooper\t2',
+    'Early\tMisfit Toys\tCindy Garvin\t6\tChris Sage\t4\tChucky Stockwell\t5',
+    'Early\tWrecking Balls\tRon Sohnrey\t6\tCaiti Hupp\t5\tDon Broadwater\t5',
+    'Late\tColor of Money\tBryan Bommersbach\t5\tDaniel Huck\t4\tJ Farr\t6',
+    'Early\tEthical $ndbgrz\tShannon Gee\t4\tRose Donovan\t4\tJeremiah Clement\t7',
+    'Late\tVanders\' Vermin\tJohn Mikulskis\t4\tAnthony Pignataro\t4\tVanders Lewis\t3',
+    'Early\tDespicable Us\tSlava Min\t7\tAlena Rassokhina\t4\tEgor Cravtov\t4',
+    'Early\tStrange Magic\tChuck Miles\t4\tRodney Banta\t6\tLaurie Malm\t3',
+    'Early\tWhiskey boys\tTyron Willhite\t5\tMarvin Lorence\t4\tBlack ice Jones\t4',
+    'Early\tFroggy hoppers\tChris underland\t5\tJulian rock\t6\tObie Gomez\t3',
+    'Late\tE.S.L.\tJohn Barbieri\t6\tJoey Coursey\t5\tLyndsey Martin\t4',
+    'Early\tFammered\tPaul Roshak\t5\tAnna Roshak\t5\tShiela Carney\t5',
+    'Late\tDoubleDsandbags\tJohn McNally\t4\tBoston Flagg\t3\tDylan Brown\t4',
+    'Late\tOne Part Insanity\tDelores Petrich\t5\tDesi Oberman\t4\tLarry Gee\t6',
+    'Early\tLucky, Lucky\tKamini Silva\t5\tJunior Garcia\t3\tJerry Tom\t6',
+    'Late\tAll about fun\tBeverly Hooten-Schantz\t4\tScott Graham\t4\tMichael Kromm\t2',
+    'Early\tOK WHERE WE AT?\tSTEPHEN CHANDLER\t6\tHANNAH GELOK\t4\tMABLE LEE\t4',
+    'Early\tTeam Spirit\tPavel Ustinov\t7\tNadya Ustinova\t5\tIgor Novikov\t4',
+    'Late\tCue-ties\tMarissa Chavira\t3\tHailey Jensen\t2\tCiara DeGraff\t3',
+    'Late\tKICK ASS POOL MULES\tGLYN JENKINS\t6\tJENNIFER CARR\t3\tEARL SMITH\t4',
+    'Late\tChinook, Line & Sinkers\tMelinda Sherman\t5\tMark Sherman\t4\tAkio Nakashima\t7',
+    'Early\tCUE\'S-R-US\tBrad Hinkle\t5\tBrandon Cloud\t5\tFelix Briceno Alvaro\t4',
+    'Early\tThe Richard Noggins Trio\tSean McCloud\t6\tJohn Walbridge\t5\tMark Dearing\t4',
+    'Early\tAARP Chicks\tMarinda Ledgerwood\t5\tLisa Petersen\t5\tEarleen Martin\t3',
+    'Early\tJust the 3 of us\tLindee MacDonald\t5\tLarry Moccardine\t4\tRachael MacDonald\t4',
+    'Early\tDiamond Players\tJason MacDonald\t6\tBrad Petersen\t4\tDeana Nerton\t3',
+    'Early\tHigh I Cues\tBrian Bancke\t7\tLei Kautzman\t5\tChris Wagner\t4',
+    'Early\trUrowrAggy\tTracie "Le" Stedman-Falls\t3\tEric Stedman-Falls\t7\tMike Davis\t3',
+    'Early\tUnsolicited Stick Pics\tBrian Tomlinson\t5\tAndrea Heitzman\t4\tPenny Wafford\t4',
+    'Early\tChalk It Up\tKrishnamurthy Ganesan\t6\tMargaret Goodman\t4\tToby delgato\t4',
+    'Early\tThe Rack Pack\tCrystal Weisenborn\t3\tRobert Arkills\t5\tDakota French\t2',
+    'Late\tWe\'re Your Huckleberries!\tJini Allen\t3\tSung Park\t6\tMani Ratsavong\t4',
+    'Late\tCardin Nguyen\tCardin Nguyen\t7\tAlex Hoang\t5\tPuthea Pan\t4',
+    'Early\tBrews and Cues North\tKathi Nakama\t4\tRobert Vinson\t6\tKaitlin Costa\t4',
+    'Early\tBrown Delicious\tRob Crowley\t5\tGary Del Rosario\t4\tElvin Estrella\t6',
+    'Late\tMike\'s Marauders\tPaul Harbison\t4\tLynnie McComas\t3\tMike Harlow\t5',
+    'Early\tAura cookers\tNadya Bobrova\t3\tCarl Maier\t5\tJustin Thomas\t6',
+    'Early\tJaws, Tiger & The Skip\tShane Mulhern\t6\tPrashanth Gunda\t5\tSteve Hofstetter\t5',
+    'Early\tOne Too Many\tRyan Meaney\t4\tAlex Christensen\t5\tAshley Hancock\t4',
+    'Early\tCuetastrophy\tKaren Blodgett\t5\tKevin Blodgett\t6\tMichael Bostwick\t4',
+    'Late\tRacks2Riches\tCJ Allen\t4\tScott Ramsdell\t6\tGriffin Listy\t4',
+    'Late\tUnsportsmanlike\tJenn Mendick\t5\tKara Pickens\t5\tDavid "Jay" Ringo\t6',
+    'Late\tRush Hour +1\tTao Wei\t6\tKarely Romero\t4\tCorey Jenkins\t3',
+    'Late\tSum Ting Wong\tJeremy Dauglash\t5\tJonathan Ramalheira-Tsu\t7\tAlex Good\t3',
+    'Late\tLags to Riches\tJeffrey Weston\t6\tRay Ivey\t4\tSteven Leckie\t4',
+    'Late\tShenanigans\tShawnna Parker\t5\tWayne Parker\t4\tBryan Williams\t7',
+    'Early\tCue Tipsy\tColby Garvin\t6\tAmy Garvin\t5\tRobert Brown\t4',
+    'Early\tThe Fearsome Threesome\tDerek Fox\t4\tMark Shanbeck\t3\tMichaelalisson DaSilva\t5',
+    'Early\tKitti and the boys\tJon Nellis\t5\tRandy Nellis\t6\tKitti frampton\t4',
+    'Early\t#1-POOLSHOCKERS\tSTEVE BRADLEY\t5\tDAN WINFREE\t4\tMIKE VOYTKO\t5',
+    'Early\t#2-POOLSHOCKERS\tROB GIBSON\t5\tJOHN PETERSON\t5\tKEVIN LONG\t5',
+    'Early\t#3-POOLSHOCKERS\tSUE WINFREE\t3\tCONNIE PETERSON\t3\tDIANE BRADLEY\t3',
+    'Late\tO Snap!\tAllison Namba\t4\tCharlie Namba\t6\tDion Brown\t4',
+    'Late\tRackless Abandon\tShemal Medawattage\t6\tLina Blinova\t3\tArvind Kumar\t4',
+    'Early\tRoyce\'s Rolls\tRoyce de Vries\t5\tShawn Allen\t6\tKaren Ames\t3',
+    'Early\tBallbarians\tBetsy Alford\t4\tCurtis Collins\t7\tLily Alford\t4',
+    'Early\tBald and the Beauties\tJason Alford\t6\tMary "Mo"  Watson\t4\tTracy Stewart\t2',
+    'Late\tMid life crisis\tDeanna Barnes\t4\tCharles Clarke\t5\tBarry La Celle\t4',
+    'Late\tTriple Threat Cue Crew\tBrad Vaughn\t4\tSara Vaughn\t4\tBrian Watson\t4',
+    'Late\t2 guys & A redhead\tJames whitney\t5\tCrystal Swails\t4\tMichael Boley\t5',
+    'Early\tTrio of Trouble\tKim Harmon\t6\tMiguel Madrigal\t5\tLeo Hernandez Luna\t2',
+    'Late\t8 Ball Baddies\tAmy Brown\t3\tSally Sloan\t2\tJennifer Allison\t2',
+    'Early\tEasy-goers\tKiana Early\t5\tLeroy Early\t4\tGeorge "Short" Hill\t5',
+    'Early\tSpud life\tElizabeth Hanson\t3\tKeith Hanson\t5\tTyson Davis\t6',
+    'Late\tTable bullies\tTommy\t5\tJustin willhite\t5\tTerri mueller\t3',
+    'Early\t2 giants and a Shorty\tSteve Foster\t4\tLaura Foster\t2\tJason Laster\t5',
+    'Late\tFried Catfish\tJudson Lloyd Welch\t4\tFry Harris\t5\tCat Harris\t3',
+    'Late\tCuelonoscopy\tAmelia Ferguson\t4\tJohn Simmons\t5\tTariq Eyssa\t6',
+    'Late\tTriple Threat\tDerek Richoux\t4\tRobert McGaughey\t3\tKurtis Hamm\t6',
+    'Late\tBrews and Bros\tClint Petty\t5\tRobert Wakeman\t5\tJeffery Hamilton\t5',
+    'Early\tCAT Sandwich\tAshley Rogers\t4\tCaleb Anderson\t5\tThomas Kokinos\t5',
+    'Late\tPro Lessons from Daisy\tKyle Porter\t5\tDaisy Behnke\t4\tTony Poundstone\t4',
+    'Early\tReturn the clipboard\tMike Mitchell\t6\tStacy Enriquez\t5\tMax Desnoyers\t4',
+    'Late\tEight Misbehavin\tGaleena Dethlefs\t6\tLaurie Noah\t4\tStacy Dazey\t3',
+    'Late\tIrritable Ball Syndrome\tDavid Hake\t5\tRiley Van Gorder\t4\tAlex Weisberg\t7',
+    'Late\tBandits\tNoe Torres\t6\tChik\'n Lil kyles\t5\tSophia Rauda Mariscal\t2',
+    'Late\t3 Tadka\tKapil Londhe\t6\tTamilarasu Manickavelu\t5\tSaksham Sijariya\t5',
+    'Early\tTeam Chinook\tEvelyn Hazlett\t6\tPatty Mendoza\t4\tMiliann Chin\t5',
+    'Late\tBalaloop\tKayl Myers\t5\tAaron Almanzor\t6\tMorgan Lovlien\t4',
+    'Late\tTriple Trouble\tRonniLynn Anderson\t3\tRudy Vasquez\t6\tRikkiLynn Krieger\t4',
+    'Late\tSure shot\tTaylor Smith\t6\tMarcell Argumedo\t5\tWendy Hopkins\t4',
+    'Early\tStick & Twisted\tStacie Hunt\t3\tAndy Affeldt\t4\tNick Lovlien\t5',
+    'Late\tBlack Sheep Squad\tMelinda Coker\t5\tBob Skelton\t5\tMackenzie Hornych\t4',
+    'Early\tBest Nite of the week\tLonnie Knotts\t4\tRoger Schantz\t4\tWilliam "Billy" Knotts\t6',
+    'Late\tGehrke Boys\tMatt Gehrke\t6\tDrew Gehrke\t3\tJake Gehrke\t5',
+    'Early\tChalk It Up\tKrishnamurthy Ganesan\t6\tMargaret Goodman\t4\tToby delgato\t4',
+    'Late\tStyx & Stones\tNorman Abel\t5\tMike. Gallucci\t5\tSakura waters\t3',
+    'Early\tTim-Hal-Dal\tDale Johnson\t6\tAndrew Stroud\t2\tTimothy Moseley\t3',
+    'Late\tC\'mon man\tRobert Jacobson\t5\tBrad Gerow\t5\tSue Gerow\t3',
+    'Early\tSnap, Krackle, Pop\tKristle McClure\t4\tCameron McClure\t4\tJames Pope\t6',
+    'Early\tStrange Brew.\tPatrick Casey\t5\tNeil verkland\t3\tMarc Harader\t6',
+    'Late\tBandoleros\tRicardo Torres\t5\tLuis Cruz Erasto\t5\tKris Dazey\t3',
+    'Late\tFor the Cause\tAlisha McParland\t4\tJoseph Farmer\t7\tJordan Campbell-Reyna\t3',
+    'Late\tThree\'s Company\tWhitney Laucks\t4\tJoseph Amo\t7\tWilliam Giuggio\t4',
+    'Early\tLike, 3 uh... 3 Guys\tTy Thomas\t5\tKenny Still\t4\tBrendan Borromeo\t4',
+    'Early\tTable By The Bar\tTyson Croonquist\t6\tVeronica Hinojosa\t3\tRISE DEVOE\t4',
+    'Late\tOff in Public\tSeth Riccardi\t4\tRoxy Applegate\t3\tKari Taylor\t3',
+    'Late\tVCR\tCody Poindexter\t4\tRian Devore\t5\tVic Zamora\t4',
+    'Late\tA, B and a J\tAaron Probst\t7\tBecky Pike\t3\tJennifer Tate\t4',
+    'Late\tBank that\tDavid McKiernan\t7\tPranjal Soni\t5\tSteve Ross\t5',
+    'Late\t1/2 a prison deputy\tVanessa Keith\t3\tKevin Hess\t4\tCharles Moar\t4',
+    'Late\tZoo\'s Finest\tAlex Pignataro\t6\tGabe Waddle\t4\tJason Cole\t3',
+    'Late\tOff in church\tDave Curtis\t6\tKristen Shellenberger\t5\tMarlena Thompson\t3',
+    'Early\tOptimus Cue\tAnthony Keller\t7\tDan Rodgers\t4\tTim Remley\t4',
+    'Early\tGrateful spread\tArsalan Darby\t6\tChris O\'Dell\t4\tMike O\'Dell\t5',
+    'Late\tThree diehards\tKristin Cambas\t6\tKim Allen Moyak\t5\tAnna Long\t4',
+    'Early\tGrateful deadpool\tTom Benneche\t5\tDarby Stewart\t2\tMark koch\t3',
+    'Late\tThe Lunastics\tMartin Vanelli\t5\tJonathan Hanson\t5\tCasey Hanson\t2',
+    'Late\tVanPort\tSkip Meulners\t5\tJosh Robertson\t5\tDerek Byers\t6',
+    'Early\tAsk Brady Baby.\tNirmal Peters\t7\tBrady Gutierrez\t3\tGerarado Garcia\t4',
+    'Late\tFetted Moppets\tJeffrey Erickson\t4\tWilliam Erickson\t4\tMegan Boren\t6',
+    'Late\tTrough Donkeys\tJennifer Pearson\t5\tGarrett Pearson\t4\tClifford Maxson\t7',
+    'Early\tThe Jitter Inducers\tMichelle Blevens\t3\tRon Tinkle\t4\tJian Yang\t7',
+    'Late\tAll 4 Chinookie\tBryan Chin\t5\tDerek Ramsey\t6\tAlea Corbin\t3',
+    'Early\tBelieve\tSohil Shah\t7\tAdam Hunnicutt\t4\tMahir Dzelil\t4',
+    'Late\tScratch Magnets\tLucas Arismendez\t6\tStephenie Erickson\t2\tJesse Walker\t4',
+    'Early\tBetter lucky the good\tShawn Kellar\t6\tJessica Kellar\t3\tJose (joe) Ramirez jr\t4',
+    'Late\tCue the Queens\tNicole Eckrich\t5\tKristie Cromwell\t4\tMeagan Harrell\t3',
+    'Late\tFilthy Witch\tJarrod Adams\t6\tKevin Sumlin\t3\tAmanda Marler\t5',
+    'Early\tMarauding Merkins\tDallas "Reverend" Roemeling\t5\tSteve "BarSteward" Barry\t7\tJim "Hot Sauce" Ehmann\t5',
+    'Late\tSixth sick sheik\tDavid Derrickson\t7\tJeremy Bickford\t4\tDaniel Yates\t4',
+    'Early\tHome Turf!\tJeri\t3\tJames Aguilar\t5\tPatrick Baccellieri\t7',
+    'Late\tAlbany Aces\tSteven Burns\t5\tBrian Stout\t5\tMike Papenfus\t5',
+    'Late\tFully Galvanized\tKatherine Galvan Rios\t2\tJohnny Galvan\t6\tVictorino Galvan\t5',
+    'Late\tThrown together\tMargo Torres\t3\tRyan Perkins\t5\tCary Horton\t5'
+  ];
+
+  /* =====================================================================
+     Parse 3-person data into structured objects.
+     ===================================================================== */
+  function parse3Person(rawLines) {
+    var teams = [];
+    for (var i = 0; i < rawLines.length; i++) {
+      var parts = rawLines[i].split('\t');
+      if (parts.length < 8) continue;
+      var totalSL = parseInt(parts[3],10) + parseInt(parts[5],10) + parseInt(parts[7],10);
+      teams.push({
+        flight: parts[0].trim().toLowerCase(),
+        name: parts[1].trim(),
+        p1: parts[2].trim(), p1sl: parts[3].trim(),
+        p2: parts[4].trim(), p2sl: parts[5].trim(),
+        p3: parts[6].trim(), p3sl: parts[7].trim(),
+        totalSL: totalSL
+      });
+    }
+    return teams;
+  }
+
+  function card3PHTML(team, idx) {
+    var flightCls = team.flight === 'early' ? 'early' : 'late';
+    var flightLabel = team.flight === 'early' ? 'Early' : 'Late';
+    return '<div class="team-card" data-search="' + escAttr(
+        team.name.toLowerCase() + ' ' +
+        team.p1.toLowerCase() + ' ' +
+        team.p2.toLowerCase() + ' ' +
+        team.p3.toLowerCase()
+      ) + '" data-flight="' + flightCls + '">' +
+      '<div class="card-header">' +
+        '<span class="seed-badge">#' + (idx + 1) + '</span>' +
+        '<span class="team-name">' + esc(team.name) + '</span>' +
+        '<span class="flight-badge ' + flightCls + '">' + flightLabel + '</span>' +
+      '</div>' +
+      '<div class="card-players">' +
+        '<span class="player-name">' + esc(team.p1) + '<span class="player-sl"> SL' + esc(team.p1sl) + '</span></span>' +
+        '<span class="player-name">' + esc(team.p2) + '<span class="player-sl"> SL' + esc(team.p2sl) + '</span></span>' +
+        '<span class="player-name">' + esc(team.p3) + '<span class="player-sl"> SL' + esc(team.p3sl) + '</span></span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function render3Person(teams, gridId, countId) {
+    var grid = document.getElementById(gridId);
+    var count = document.getElementById(countId);
+    var html = '';
+    for (var i = 0; i < teams.length; i++) {
+      html += card3PHTML(teams[i], i);
+    }
+    grid.innerHTML = html;
+    count.textContent = teams.length + ' teams';
+  }
+
+  var current3PFlight = 'all';
+  var threePersonTeams = parse3Person(RAW_3_PERSON);
+
+  function filter3P(flight, btn) {
+    current3PFlight = flight;
+    var pills = document.querySelectorAll('.flight-filter .flight-pill');
+    for (var i = 0; i < pills.length; i++) {
+      pills[i].classList.toggle('active', pills[i].getAttribute('data-flight') === flight);
+    }
+    apply3PFilter();
+  }
+
+  function apply3PFilter() {
+    var grid = document.getElementById('grid-3-person');
+    var cards = grid.querySelectorAll('.team-card');
+    var q = (document.getElementById('search-3-person').value || '').toLowerCase().trim();
+    var visible = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var matchFlight = current3PFlight === 'all' || cards[i].getAttribute('data-flight') === current3PFlight;
+      var matchSearch = !q || cards[i].getAttribute('data-search').indexOf(q) !== -1;
+      var show = matchFlight && matchSearch;
+      cards[i].style.display = show ? '' : 'none';
+      if (show) visible++;
+    }
+    document.getElementById('count-3-person').textContent = visible + ' teams';
+  }
+
+  /* =====================================================================
      Init: parse data, render, set active tab from URL hash.
      ===================================================================== */
   var earlyBirdTeams = parseRoster(RAW_EARLY_BIRD);
   renderRoster(earlyBirdTeams, 'grid-early-bird', 'count-early-bird');
   setupSearch('search-early-bird', 'grid-early-bird', 'count-early-bird');
+
+  render3Person(threePersonTeams, 'grid-3-person', 'count-3-person');
+  document.getElementById('search-3-person').addEventListener('input', apply3PFilter);
 
   // Activate tab from hash, default to early-bird
   var initHash = location.hash.replace('#', '') || 'early-bird';
