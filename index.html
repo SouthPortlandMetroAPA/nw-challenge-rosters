@@ -1068,7 +1068,7 @@ body {
   var current3PFlight = 'all';
   var threePersonTeams = parse3Person(RAW_3_PERSON);
 
-  function filter3P(flight, btn) {
+  window.filter3P = function(flight, btn) {
     current3PFlight = flight;
     var pills = document.querySelectorAll('.flight-filter .flight-pill');
     for (var i = 0; i < pills.length; i++) {
