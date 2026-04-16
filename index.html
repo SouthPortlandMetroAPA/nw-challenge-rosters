@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Rosters — APA NW Challenge</title>
+<style>
+/* ==========================================================================
+   CSS Reset & Variables
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary: #c2b280;
+  --primary-dark: #b5a574;
+  --bg: #f5f0e8;
+  --text: #000;
+  --card: #fff;
+  --muted: #666;
+  --border: #d4c9a8;
+  --radius: 10px;
+  --spacing: 4px;
+  --success: #2e7d32;
+  --danger: #c0392b;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   Header with Wave
+   ========================================================================== */
+.header {
+  background: var(--primary);
+  padding: 24px 16px 32px;
+  text-align: center;
+  position: relative;
+}
+
+.header h1 {
+  font-size: clamp(1.25rem, 1rem + 1.5vw, 1.75rem);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.header .subtitle {
+  font-size: clamp(0.9rem, 0.75rem + 0.8vw, 1.15rem);
+  font-weight: 500;
+  color: rgba(0,0,0,0.7);
+  margin-top: 4px;
+}
+
+.header-wave {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  overflow: hidden;
+}
+
+.header-wave svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ==========================================================================
+   Tab Navigation
+   ========================================================================== */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: var(--card);
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 8px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: clamp(0.75rem, 0.65rem + 0.5vw, 0.95rem);
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+  min-height: 48px;
+}
+
+.tab-btn:hover {
+  color: var(--text);
+}
+
+.tab-btn.active {
+  color: var(--text);
+  border-bottom-color: var(--primary-dark);
+}
+
+/* ==========================================================================
+   Tab Content
+   ========================================================================== */
+.tab-panel {
+  display: none;
+  flex: 1;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* ==========================================================================
+   Search & Controls
+   ========================================================================== */
+.controls {
+  padding: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 12px 10px 40px;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-box:focus {
+  border-color: var(--primary-dark);
+}
+
+.search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+  font-size: 1rem;
+}
+
+.team-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--primary);
+  color: var(--text);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Card Grid
+   ========================================================================== */
+.roster-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 0 16px 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .roster-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1200px) {
+  .roster-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ==========================================================================
+   Team Card
+   ========================================================================== */
+.team-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+
+@media (hover: hover) {
+  .team-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+  }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.seed-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--card);
+  background: var(--text);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.team-name {
+  flex: 1;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.sl-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.card-players {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.player-name {
+  font-size: 0.85rem;
+  color: var(--text);
+  padding-left: 4px;
+}
+
+.player-name::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Coming Soon Placeholder
+   ========================================================================== */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.placeholder h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.placeholder p {
+  font-size: 0.95rem;
+}
+
+/* ==========================================================================
+   No Results
+   ========================================================================== */
+.no-results {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.footer {
+  text-align: center;
+  padding: 20px 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+</style>
+</head>
+<body>
+
+<!-- ====================================================================
+     Header
+     ==================================================================== -->
+<header class="header">
+  <h1>APA NW Challenge</h1>
+  <div class="subtitle">Event Rosters</div>
+  <div class="header-wave">
+    <svg viewBox="0 0 1200 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,10 C150,20 350,0 600,10 C850,20 1050,0 1200,10 L1200,20 L0,20 Z" fill="var(--bg)" />
+    </svg>
+  </div>
+</header>
+
+<!-- ====================================================================
+     Tabs
+     ==================================================================== -->
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" role="tab" aria-selected="true"
+          data-tab="early-bird" id="tab-early-bird" aria-controls="panel-early-bird">
+    Early Bird Scotch Doubles
+  </button>
+  <button class="tab-btn" role="tab" aria-selected="false"
+          data-tab="3-person" id="tab-3-person" aria-controls="panel-3-person">
+    3-Person Team
+  </button>
+  <button class="tab-btn" role="tab" aria-selected="false"
+          data-tab="weekender" id="tab-weekender" aria-controls="panel-weekender">
+    Weekender Scotch Doubles
+  </button>
+</nav>
+
+<!-- ====================================================================
+     Early Bird Panel
+     ==================================================================== -->
+<section class="tab-panel active" id="panel-early-bird" role="tabpanel" aria-labelledby="tab-early-bird">
+  <div class="controls">
+    <div class="search-row">
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true">&#128269;</span>
+        <input type="search" class="search-box" id="search-early-bird"
+               placeholder="Search by team or player name..." aria-label="Search teams">
+      </div>
+      <span class="team-count" id="count-early-bird"></span>
+    </div>
+  </div>
+  <div class="roster-grid" id="grid-early-bird"></div>
+</section>
+
+<!-- ====================================================================
+     3-Person Panel
+     ==================================================================== -->
+<section class="tab-panel" id="panel-3-person" role="tabpanel" aria-labelledby="tab-3-person">
+  <div class="placeholder">
+    <div class="placeholder-icon" aria-hidden="true">&#127993;</div>
+    <h2>3-Person Team</h2>
+    <p>Rosters coming soon. Check back later!</p>
+  </div>
+</section>
+
+<!-- ====================================================================
+     Weekender Panel
+     ==================================================================== -->
+<section class="tab-panel" id="panel-weekender" role="tabpanel" aria-labelledby="tab-weekender">
+  <div class="placeholder">
+    <div class="placeholder-icon" aria-hidden="true">&#127993;</div>
+    <h2>Weekender Scotch Doubles</h2>
+    <p>Rosters coming soon. Check back later!</p>
+  </div>
+</section>
+
+<!-- ====================================================================
+     Footer
+     ==================================================================== -->
+<footer class="footer">APA NW Challenge 2026</footer>
+
+<!-- ====================================================================
+     JavaScript
+     ==================================================================== -->
+<script>
+(function () {
+  'use strict';
+
+  /* =====================================================================
+     Early Bird Scotch Doubles roster data.
+     Format per line: #SEED TeamName SL N\tPlayer1\tPlayer2
+     ===================================================================== */
+  var RAW_EARLY_BIRD = [
+    '#1 Butterflops SL 10\tCharles Stockwell\tJames Christopher',
+    '#2 Cold stroke killers SL 9\tJustin Willhite\tTommy Johnson-shook',
+    '#3 Double L SL 9\tLisa Petersen\tLeitalatala Kautzman',
+    '#4 Fire & Ice SL 7\tRebecca Cowley\tJarred Cowley',
+    '#5 Shot Talkers SL 9\tApril Bijak\tEric Bijak',
+    '#6 Stroke problems SL 9\tChristopher Ravins\tMark Francom',
+    '#7 Break & Done SL 6\tHarlem Quijano\tMichael Hartel',
+    '#8 Marital Bliss SL 10\tJason Alford\tBetsy Alford',
+    '#9 Big & Small SL 8\tJeffery Braun\tJennifer Sevilla',
+    '#10 Bandoleros SL 9\tRicardo Torres\tLuis Cruz Erasto',
+    '#11 Nah, I\'d Win SL 5\tTyler Brost\tTyler Stratton',
+    '#12 Bank Bros SL 11\tPuthea Pan\tCardin Nguyen',
+    '#13 A Perfect Match SL 6\tJonathan Hanson\tCasey Hanson',
+    '#14 Let\'s do this SL 9\tStacy Enriquez\tCary Horton',
+    '#15 Nacho Pimp SL 10\tScott Black\tVeronica Weinhart',
+    '#16 Believe SL 11\tSohil Shah\tAdam Hunnicutt',
+    '#17 Too Soon 1 SL 8\tRichard Stirgus\tAaron Donaldson',
+    '#18 #3-POOLSHOCKERS SL 8\tConnie Peterson\tJohn Peterson',
+    '#19 Cupcake SL 10\tTracy Stewart\tJimmy Arellanes',
+    '#20 Nervous Rex SL 5\tAngela Miller\tMichael Bostwick',
+    '#21 Chug Norris SL 8\tBarry LaCelle\tMark Sherman',
+    '#22 Toni and The Tiger SL 5\tToni Weil\tMary Stroud',
+    '#23 Pool Dancers SL 7\tJessica Nikolas\tAprile Hall',
+    '#24 Wicked Shot SL 10\tKaren Blodgett\tKevin Blodgett',
+    '#25 Pocket Monsters SL 8\tRobert Skelton\tMacKenzie Hornych',
+    '#26 Oregon Donors SL 10\tPenny Wafford\tEvelyn Hazlett',
+    '#27 Oops...Sorry! SL 6\tJohn Lamb\tKatie Meyer',
+    '#28 Hotlanta Hustlers SL 8\tGioiella Pitillo\tJackie Wardlaw',
+    '#29 Just Makin\' It SL 7\tWilliam Laster\tMisty Rodney',
+    '#30 2 guys 1 cue SL 8\tJames Hooper\tNicholas Coll',
+    '#31 I don\'t know Margot SL 8\tMargarita Torres\tDelores Petrich',
+    '#32 And And And And SL 9\tTy Thomas\tKenny Still',
+    '#33 Sorry, Not Sorry! SL 10\tJessica Tanabe\tJames Seefurth',
+    '#34 First Instinct SL 10\tCharles Namba\tCody McGlin',
+    '#35 Double Clam Slam SL 10\tDana German\tJennifer Giller',
+    '#36 Gp2 SL 9\tGlen Perry\tGlen Perry Jr',
+    '#37 Designated Drinkers SL 10\tCindy Garvin\tChristopher Sage',
+    '#38 Couples Counseling SL 9\tNicholas Lovlien\tMorgan Lovlien',
+    '#39 Cat\'s Meow, hiss SL 9\tMilianne Chin\tPatricia Mendoza',
+    '#40 Ball Busters SL 11\tLouis Galindo\tKenny Roberts',
+    '#41 Anything is fine SL 10\tChristian Zarate\tAlex Good',
+    '#42 Jagerbombers SL 9\tBill Berggren\tKen Talbert',
+    '#43 McTavish SL 6\tLawrence Knotts II\tRachel Brudnok',
+    '#44 Just4Fun SL 11\tRenat Valiullin\tNadezhda Ustinova',
+    '#45 No Rack Roshak SL 10\tPaul Roshak\tAnna Mixon-Roshak',
+    '#46 Coming From Behind SL 6\tHannah Gelok\tLori Segura',
+    '#47 Scotty Knows SL 5\tPaul Harbison\tLynnie McComas',
+    '#48 Purrrrrfect Break SL 5\tRebecca Hanset\tGrace Hanset',
+    '#49 Get it Girl SL 10\tThomas Kokinos\tCaleb Anderson',
+    '#50 Candy Cartel SL 6\tKristi Corcoran\tMahir Dzelil',
+    '#51 Irish Whiskey SL 11\tCurtis Collins\tAngela Groves',
+    '#52 Breaking Bad SL 11\tJake Frazier\tMichael Fisher',
+    '#53 Galvan Clan SL 10\tVictorino Galvan\tJohnny Galvan',
+    '#54 Laffin & Scratchin SL 9\tJames Brinson\tMargaret Goodman',
+    '#55 Mission: Pocketable SL 6\tSheila Peirce\tJared Cornman',
+    '#56 No no bad touch SL 7\tRobert Kensler\tDametrius Fries',
+    '#57 May contain nuts SL 9\tRyan Behnke\tJoyce Ferguson',
+    '#58 VicCodyus SL 7\tCody Poindexter\tVic Zamora',
+    '#59 Ladies First SL 8\tAndrea Dethlefs\tLaurie Noah',
+    '#60 Return the clipboard SL 8\tMichael Mitchell\tMax Desnoyers',
+    '#61 M&J SL 10\tJustin Alvarado\tMatthew Edwards',
+    '#62 1/2 a prison break SL 7\tKevin Hess\tVanessa Keith',
+    '#63 2 guys 17 fingers SL 10\tRandy Nellis\tJon Nellis',
+    '#64 Yippee Ki Yay SL 10\tTerry McCurdy\tPhanindra reddy Madduru',
+    '#65 Krancy SL 8\tNancy Lockwood\tKris Leistritz',
+    '#66 Stepbrothers SL 10\tJoshua Robertson\tDerek Byers',
+    '#67 Ebony & Ivory SL 9\tShiela Carney\tRon Tinkle',
+    '#68 Dazed & Confused SL 9\tShawnna Parker\tWayne Parker',
+    '#69 Silk Road Shooters SL 11\tAlexander Hoang\tKrishnamurthy Ganesan',
+    '#70 Hit or Miss SL 7\tJulie Maslen\tScott George',
+    '#71 Happy Accidents SL 9\tJason Castro\tStacey Parker',
+    '#72 Let\'s Go! SL 6\tKevin Sumlin\tDaniel Yates',
+    '#73 It Is What It Is SL 10\tSadie Cordell\tJohn Barbieri',
+    '#74 Enya Face! SL 9\tJonathan Ramalheira-Tsu\tEnya Garcia',
+    '#75 Scottage Cheese SL 9\tJennifer Carr\tScott Ramsdell',
+    '#76 BULL DOGS SL 7\tDiane Bradley\tStephen Bradley',
+    '#77 The Harmons SL 11\tKimberly Harmon\tEric Harmon',
+    '#78 My Mom SL 7\tCole Sprando\tMatt Goodman Gray',
+    '#79 High I Cue SL 9\tSakura Waters\tJeremiah Clement',
+    '#80 BUCKETS & PATIENCE SL 10\tTiffiny Engle\tJimmy Farmer',
+    '#81 Chalk Norris SL 8\tNeil Verkland\tDavid Hake',
+    '#82 Aura cookers SL 7\tCarl Maier\tNadya Bobrova',
+    '#83 Grateful Spread SL 7\tArsalan Darby\tTerri Mueller',
+    '#84 Wrecking Balls SL 11\tRonald Sohnrey\tCaitland Hupp',
+    '#85 Pitter Patter SL 10\tPatrick Stalnaker\tKim Kruse',
+    '#86 Doubling Down! SL 9\tSung Park\tJini Allen',
+    '#87 May Contain Alcohol SL 7\tRise Devoe\tVeronica Hinojosa',
+    '#88 Big Sexy SL 10\tBrock Brisby\tHeidi Jeffries',
+    '#89 Not Sure SL 11\tKayle Myers\tAaron Almanzor',
+    '#90 No Talent Clowns SL 10\tBrian Bancke\tLarry Moccardine',
+    '#91 Hold My Beer SL 9\tAnthony Price\tCaylie Parker',
+    '#92 Bandits SL 9\tNoe Torres\tJoel Gonzalez',
+    '#93 Clever Stunts SL 10\tDallas Roemeling\tAngus Montgomery',
+    '#94 The Rooks SL 6\tSeth Riccardi\tRoxy Applegate',
+    '#95 Cuetie & the Beast SL 7\tStacie Hunt\tAndy Affeldt',
+    '#96 Mesa SL 9\tJonathon Mesa II\tJonathon Mesa',
+    '#97 Re-United SL 7\tJennifer Tate\tRebecca Pike',
+    '#98 Cause Caiti Said So SL 8\tPhilip Hupp\tMelanie Hooper',
+    '#99 Pool bears SL 12\tGerardo Garcia\tNirmal Peter',
+    '#100 Double shots SL 11\tJames Johnson\tGlen Curtis',
+    '#101 Eagle Eyes SL 9\tDanny Burdick\tCourtney Talbert',
+    '#102 Cue Tips SL 7\tJackie McCabe\tTimothy Moseley',
+    '#103 Shot Conspiracy SL 8\tSusan Gerow\tBradley Gerow',
+    '#104 Strange Magic SL 9\tCharles Miles\tRodney Banta',
+    '#105 N&C SL 9\tChristopher Peterson\tNichole Peterson',
+    '#106 #2-POOLSHOCKERS SL 9\tMike Voytko\tRobert Gibson',
+    '#107 No Hair Don\'t Care SL 10\tElvin Estrella\tGary Del Rosario',
+    '#108 Diablo Powder SL 6\tKyle Porter\tMarissa Glazier',
+    '#109 Attention Deficit SL 10\tTyson Croonquist\tAndrea Heitzman',
+    '#110 Felt Up SL 8\tJarrod Runion\tNick Brown',
+    '#111 Perfect Strangers SL 9\tJohn Walbridge\tToby Delgado',
+    '#112 Mamacita & Mini SL 6\tStacie Larson\tSophie Larson',
+    '#113 Gehrke Boys SL 9\tMatt Gehrke\tDrew Gehrke',
+    '#114 Shot Callers SL 8\tMani Ratsavong\tCj Allen',
+    '#115 Too Soon 3 SL 7\tLisa Stirgus\tCarl McCauley',
+    '#116 Morning Wood SL 11\tRobert George\tMickel Yost',
+    '#117 U Got Brambled SL 10\tJason Bramble\tMatt Kruse',
+    '#118 The party crew SL 8\tTom Benneche\tPatrick Barney',
+    '#119 Hail Mary SL 6\tDan Perry\tAmanda Marler',
+    '#120 Pinky & the Brain SL 9\tAaron Probst\tSarah Maxey',
+    '#121 Low n\' Slow SL 10\tRiley VanGorder\tAlexander Weisberg',
+    '#122 All 8 Baby SL 9\tJarrod Adams\tJeremy Bickford',
+    '#123 Patches Pals SL 6\tJanet Henry\tScott Henry',
+    '#124 Instructions Unclear SL 9\tJames Lange\tMark Dearing',
+    '#125 Teach me how... SL 11\tMatt Terasaki\tJeremy Dauglash',
+    '#126 Human Music Group SL 7\tTyson Davis\tRaven Procknow',
+    '#127 Double Trouble SL 6\tRobert Arkills\tCrystal Weisenborn',
+    '#128 Grateful Daedpool. SL 4\tMark Koch\tDarby Stewart',
+    '#129 Fish Stix SL 9\tMatthew Fisher\tChad Garber',
+    '#130 Chai Samosa SL 11\tSaksham Sijariya\tKapil Londhe',
+    '#131 Viking Slayer SL 10\tChris Underland\tJames Moore',
+    '#132 Gambln N Rambln SL 9\tDavid Maynard\tAlex Christensen',
+    '#133 Can\'t See Straight SL 6\tTimothy Morris\tJeremy Dickey',
+    '#134 CUE\'S-R-US SL 9\tBradley Hinkle\tFelix Briceno Alvaro',
+    '#135 Hal-Dal SL 8\tDale Johnson\tAndrew Stroud',
+    '#136 Last Minute SL 9\tJames Pope\tNickolas Hiatt',
+    '#137 Table Time SL 8\tDustin Wyatt\tKathryn Koren',
+    '#138 Dustman\'s play SL 9\tAmelia Ferguson\tSteve Barry',
+    '#139 No on IP 28 SL 8\tRyan Meaney\tTony Poundstone',
+    '#140 What\'s a Que SL 8\tGerry Verhoef\tRyan Perkins',
+    '#141 Do Better SL 8\tDaisy Behnke\tBrian Daniel',
+    '#142 Team fantastic SL 9\tPatrick Casey\tSteven Leckie',
+    '#143 Tha Styk SL 9\tNick Skellenger\tCalvin Kyles',
+    '#144 Hooked Again!! SL 7\tKimberly Toney\tWilliam Toney',
+    '#145 Otter Chaos SL 9\tTravis Heryla\tWanda Massey',
+    '#146 RACK em Up SL 8\tMichael Boley\tBrandon Cloud',
+    '#147 Rack and Roll SL 8\tIgor Novikov\tArvind Kumar',
+    '#148 D\'s Taco SL 8\tDonald Broadwater\tElena Broadwater',
+    '#149 Cowboy and RedDot SL 11\tAlex Sherry\tRajeev Goonie',
+    '#150 Kung Cue Fighting SL 9\tAllison Namba\tShannon Norton',
+    '#151 Killer Bunnies SL 9\tNeil Olstad\tMelinda Coker',
+    '#152 Renegades SL 10\tScott Ruegsegger\tSarah Burr Allison',
+    '#153 Rolling stones SL 10\tNaoko Reynolds\tJason Overland',
+    '#154 Alpha Cue SL 8\tJennifer Dorsey\tTravis Warthen',
+    '#155 Wild Shugga shots SL 7\tCheyenne Mackenzie\tJake Gehrke',
+    '#156 Wacks and Wishes SL 7\tBradley Johnson\tJeremy OGuinn',
+    '#157 Fireballs SL 10\tDavid McKiernan\tThomas Black',
+    '#158 Over8ed SL 11\tJennifer Mendick\tWayne Wakabayashi',
+    '#159 Cue Queens SL 4\tJudy Davis\tDeana Nerton',
+    '#160 Potato Pancakes SL 6\tJudson Welch\tElizabeth Hanson',
+    '#161 Winfree\'s SL 7\tSuzette Winfree\tDaniel Winfree',
+    '#162 AACE SL 6\tAlea Corbin\tAlden Elias',
+    '#163 Toke N Hope SL 7\tDanielle Pranz\tJacob Braun',
+    '#164 Fry & Cat SL 6\tJonathan Harris\tCat Harris',
+    '#165 Lucky Charm SL 8\tMelinda Sherman\tKristen Lakin',
+    '#166 He drops She rattles SL 10\tEric Stedman-Falls\tTracie Stedman-Falls',
+    '#167 Can you Hear Me Now? SL 9\tTeresa Riley\tEric Stewart',
+    '#168 Shot in the dark SL 6\tNathan Scott\tMichelle Blevens',
+    '#169 Ethical $tonerz SL 8\tShannon Gee\tRose Donovan',
+    '#170 Suavemente SL 10\tLerrick Salonga\tKarely Romero',
+    '#171 Master of Pockets SL 8\tJulie Miotke\tMike Mumey',
+    '#172 Whiskey Shoot Repeat SL 10\tSean McCloud\tJohn Gumataotao',
+    '#173 The Felt Pounders SL 8\tCrystal Swails\tJames Whitney',
+    '#174 All 4 Chinookie SL 9\tDerek Ramsey\tBryan Chin',
+    '#175 Bourbon Legends SL 8\tChristine Chandler\tPhillip Segura',
+    '#176 Lags to Riches SL 10\tJeffrey Weston\tRay Ivey',
+    '#177 We Take Turns SL 9\tNathan Lannoye\tRobert Crowley',
+    '#178 Double D\'s SL 5\tMeleece DeRoest\tJim Deroest',
+    '#179 Styx & Stones SL 10\tMichael Gallucci\tNorman Abel',
+    '#180 I Made Mine SL 9\tPhillip Mahaney\tKari Taylor',
+    '#181 Pool sorry SL 9\tThomas Roberts\tDeanna Barnes',
+    '#182 Yin & Y\'All SL 11\tMike Nash\tTao Wei',
+    '#183 It\'s The Only Way SL 10\tMichael Gaddis\tDominic Trudell',
+    '#184 Raygan\'s Crew SL 10\tJamie Rheinholdt\tRandy Ruegsegger',
+    '#185 The Leftovers SL 9\tLindee Macdonald\tTammy Shepherd',
+    '#186 Lance & Brad SL 8\tLance Smith\tBrad Petersen',
+    '#187 Married Fovever SL 7\tRoger Schantz\tBeverly Schantz',
+    '#188 Thundercats SL 9\tAndrew Howard\tMelissa Mercier',
+    '#189 Cue me outside, how bout SL 8\tMichael Yung\tSpring Yung',
+    '#190 Married Downtown Browns SL 5\tAmy Brown\tDion Brown',
+    '#191 Oops sorry babe SL 9\tShawn Kellar\tJessica Kellar',
+    '#192 Double Shots SL 9\tLarry Gee\tOnessia Elliott'
+  ];
+
+  /* =====================================================================
+     Parse raw data into structured objects.
+     Regex: #SEED TeamName SL N\tPlayer1\tPlayer2
+     ===================================================================== */
+  var LINE_RE = /^#(\d+)\s+(.+?)\s+SL\s+(\d+)\t(.+?)\t(.+)$/;
+
+  function parseRoster(rawLines) {
+    var teams = [];
+    for (var i = 0; i < rawLines.length; i++) {
+      var m = LINE_RE.exec(rawLines[i]);
+      if (m) {
+        teams.push({
+          seed: parseInt(m[1], 10),
+          name: m[2],
+          sl: parseInt(m[3], 10),
+          player1: m[4],
+          player2: m[5]
+        });
+      }
+    }
+    return teams;
+  }
+
+  /* =====================================================================
+     Compute SL badge color.
+     Low SL (4-5) = green, mid (6-8) = gold, high (9-12) = red.
+     Uses HSL interpolation: 120 (green) -> 40 (gold) -> 0 (red).
+     ===================================================================== */
+  function slColor(sl) {
+    var MIN_SL = 4, MAX_SL = 12;
+    var t = (sl - MIN_SL) / (MAX_SL - MIN_SL); // 0 = low, 1 = high
+    t = Math.max(0, Math.min(1, t));
+    // Hue: 120 (green) down to 0 (red)
+    var hue = Math.round(120 * (1 - t));
+    return 'hsl(' + hue + ', 65%, 40%)';
+  }
+
+  /* =====================================================================
+     Render a team card as an HTML string.
+     ===================================================================== */
+  function cardHTML(team) {
+    return '<div class="team-card" data-search="' + escAttr(
+        team.name.toLowerCase() + ' ' +
+        team.player1.toLowerCase() + ' ' +
+        team.player2.toLowerCase()
+      ) + '">' +
+      '<div class="card-header">' +
+        '<span class="seed-badge">#' + team.seed + '</span>' +
+        '<span class="team-name">' + esc(team.name) + '</span>' +
+        '<span class="sl-badge" style="background:' + slColor(team.sl) + '">SL ' + team.sl + '</span>' +
+      '</div>' +
+      '<div class="card-players">' +
+        '<span class="player-name">' + esc(team.player1) + '</span>' +
+        '<span class="player-name">' + esc(team.player2) + '</span>' +
+      '</div>' +
+    '</div>';
+  }
+
+  /* =====================================================================
+     Render an entire roster into a grid container.
+     ===================================================================== */
+  function renderRoster(teams, gridId, countId) {
+    var grid = document.getElementById(gridId);
+    var count = document.getElementById(countId);
+    var html = '';
+    for (var i = 0; i < teams.length; i++) {
+      html += cardHTML(teams[i]);
+    }
+    grid.innerHTML = html;
+    count.textContent = teams.length + ' teams';
+  }
+
+  /* =====================================================================
+     Search / filter handler.
+     Filters cards in-DOM by toggling display based on data-search attribute.
+     ===================================================================== */
+  function setupSearch(searchId, gridId, countId) {
+    var input = document.getElementById(searchId);
+    if (!input) return;
+    input.addEventListener('input', function () {
+      var q = this.value.toLowerCase().trim();
+      var grid = document.getElementById(gridId);
+      var cards = grid.querySelectorAll('.team-card');
+      var visible = 0;
+      for (var i = 0; i < cards.length; i++) {
+        var match = !q || cards[i].getAttribute('data-search').indexOf(q) !== -1;
+        cards[i].style.display = match ? '' : 'none';
+        if (match) visible++;
+      }
+      document.getElementById(countId).textContent = visible + ' teams';
+      // Show/remove no-results message
+      var existing = grid.querySelector('.no-results');
+      if (visible === 0 && !existing) {
+        var msg = document.createElement('div');
+        msg.className = 'no-results';
+        msg.textContent = 'No teams match your search.';
+        grid.appendChild(msg);
+      } else if (visible > 0 && existing) {
+        existing.remove();
+      }
+    });
+  }
+
+  /* =====================================================================
+     HTML-escape helpers.
+     ===================================================================== */
+  function esc(s) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(s));
+    return d.innerHTML;
+  }
+
+  function escAttr(s) {
+    return esc(s).replace(/"/g, '&quot;');
+  }
+
+  /* =====================================================================
+     Tab switching with hash routing.
+     ===================================================================== */
+  var TAB_IDS = ['early-bird', '3-person', 'weekender'];
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.tab-panel');
+
+  function activateTab(id) {
+    if (TAB_IDS.indexOf(id) === -1) id = 'early-bird';
+    for (var i = 0; i < tabBtns.length; i++) {
+      var isActive = tabBtns[i].getAttribute('data-tab') === id;
+      tabBtns[i].classList.toggle('active', isActive);
+      tabBtns[i].setAttribute('aria-selected', isActive ? 'true' : 'false');
+    }
+    for (var j = 0; j < panels.length; j++) {
+      panels[j].classList.toggle('active', panels[j].id === 'panel-' + id);
+    }
+  }
+
+  // Click handler for tab buttons
+  for (var i = 0; i < tabBtns.length; i++) {
+    tabBtns[i].addEventListener('click', function () {
+      var id = this.getAttribute('data-tab');
+      location.hash = '#' + id;
+      activateTab(id);
+    });
+  }
+
+  // Listen for hash changes (back/forward nav)
+  window.addEventListener('hashchange', function () {
+    var h = location.hash.replace('#', '');
+    activateTab(h);
+  });
+
+  /* =====================================================================
+     Init: parse data, render, set active tab from URL hash.
+     ===================================================================== */
+  var earlyBirdTeams = parseRoster(RAW_EARLY_BIRD);
+  renderRoster(earlyBirdTeams, 'grid-early-bird', 'count-early-bird');
+  setupSearch('search-early-bird', 'grid-early-bird', 'count-early-bird');
+
+  // Activate tab from hash, default to early-bird
+  var initHash = location.hash.replace('#', '') || 'early-bird';
+  activateTab(initHash);
+
+})();
+</script>
+</body>
+</html>
