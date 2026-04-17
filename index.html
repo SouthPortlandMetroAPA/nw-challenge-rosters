@@ -1019,23 +1019,91 @@ body {
   ];
 
   /* =====================================================================
+     Team number assignments (team name → number).
+     ===================================================================== */
+  var TEAM_NUMBERS = {
+    'Team Chinook':101,'Better lucky the good':102,"Royce's Rolls":103,'Brown Delicious':104,
+    'Trio of Trouble':201,'Brews and Cues North':202,'CAT Sandwich':203,'Despicable Us':204,
+    "We'll take it":301,'#1-POOLSHOCKERS':302,'China house':303,'Team Spirit':304,
+    'Jaws, Tiger & The Skip':401,'The Jitter Inducers':402,'Lucky, Lucky':403,'Fish Stix':404,
+    'High I Cues':501,'Spud life':502,'Strange Magic':503,'Do Better!':504,
+    'Just the 3 of us':601,'Marauding Merkins':602,"Renegade's":603,'Chalk It Up':604,
+    'The Rack Pack':701,'She Made Me Do It':702,'Misfit Toys':703,'Stick & Twisted':704,
+    'Return the clipboard':801,'Tim-Hal-Dal':802,'Ballbarians':803,'Like, 3 uh... 3 Guys':804,
+    'Fammered':901,'The Fearsome Threesome':902,'Easy-goers':903,'Ask Brady Baby.':904,
+    'Outlaws':1001,'Kitti and the boys':1002,'2 giants and a Shorty':1003,"Don't Give Two Clucks":1004,
+    "CUE'S-R-US":1101,'Ethical $ndbgrz':1102,'Bald and the Beauties':1103,'Strange Brew.':1104,
+    '#2-POOLSHOCKERS':1201,'AARP Chicks':1202,'Wrecking Balls':1203,'Aura cookers':1204,
+    'One Too Many':1301,'rUrowrAggy':1302,'Best Nite of the week':1303,'The Richard Noggins Trio':1304,
+    '#3-POOLSHOCKERS':1401,'Brothers of the Felt':1402,'Cue Tipsy':1403,'Believe':1404,
+    'Whiskey boys':1501,'Diamond Players':1502,'Racky Balboa':1503,'Eracktile Dysfunction':1504,
+    'OK WHERE WE AT?':1601,'Snap, Krackle, Pop':1602,'Froggy hoppers':1603,'Three Amigos':1604,
+    'Grateful spread':1701,'Home Turf!':1702,'Brown chicken, brown cow':1703,'Optimus Cue':1704,
+    'Cuetastrophy':1801,'Tony Who':1802,'Rocinante':1803,'Three balls,One Cue':1804,
+    'Unsolicited Stick Pics':1901,'Shenanigans':1902,'Chalk It Up':1903,'Too Soon Trifecta':1904,
+    'Table By The Bar':2001,'Cueing Up Trouble':2002,'Grateful deadpool':2003,'Too Soon Trilogy':2004,
+    'Brews and Bros':2101,"Three's Company":2102,'Run Em Out':2103,"Zoo's Finest":2104,
+    'Mid life crisis':2201,'Clam Trap':2202,'8 Ball Baddies':2203,'Sum Ting Wong':2204,
+    'VanPort':2301,'One Part Insanity':2302,'1/2 a prison deputy':2303,'Rush Hour +1':2304,
+    'Sure shot':2401,'O Snap!':2402,'Bandoleros':2403,'Lags to Riches':2404,
+    'Styx & Stones':2501,'All 4 Chinookie':2502,'For the Cause':2503,'Cue-ties':2504,
+    "C'mon man":2601,'Chinook, Line & Sinkers':2602,'Scratch Magnets':2603,'DoubleDsandbags':2604,
+    'Pro Lessons from Daisy':2701,'Black Sheep Squad':2702,'THE RENEGADES':2703,"Vanders' Vermin":2704,
+    'The Lunastics':2801,'Fried Catfish':2802,'Fetted Moppets':2803,'Mom & the kids':2804,
+    'Triple Threat':2901,'Three diehards':2902,'Triple Trouble':2903,'Cardin Nguyen':2904,
+    'Eight Misbehavin':3001,'Unsportsmanlike':3002,"Mike's Marauders":3003,'3 Tadka':3004,
+    'Charlies Angels':3101,"Phil's Worst Nightmare":3102,'Triple Threat Cue Crew':3103,'Duck duck goose':3104,
+    'Bourbon Legends':3201,'Smooth Stroke':3202,'All about fun':3203,'KICK ASS POOL MULES':3204,
+    'Fully Galvanized':3301,'Table bullies':3302,'Shenanigans':3303,"We're Your Huckleberries!":3304,
+    'Bandits':3401,'Sixth sick sheik':3402,'Albany Aces':3403,'Balaloop':3404,
+    'Cuelonoscopy':3501,'Trough Donkeys':3502,'Them Again':3503,'E.S.L.':3504,
+    '2 guys & A redhead':3601,'Gehrke Boys':3602,'VCR':3603,'Cuebacca':3604,
+    'Filthy Witch':3701,'Bank that':3702,'A, B and a J':3703,'Racks2Riches':3704,
+    'Cue the Queens':3801,'Off in church':3802,'Off in Public':3803,'Rackless Abandon':3804,
+    'Table Time Trio':3901,'Thrown together':3902,'Irritable Ball Syndrome':3903,'Color of Money':3904
+  };
+
+  /* =====================================================================
      Parse 3-person data into structured objects.
      ===================================================================== */
   function parse3Person(rawLines) {
     var teams = [];
+    // Track which "Shenanigans" we've seen to assign correct number
+    var nameCount = {};
     for (var i = 0; i < rawLines.length; i++) {
       var parts = rawLines[i].split('\t');
       if (parts.length < 8) continue;
       var totalSL = parseInt(parts[3],10) + parseInt(parts[5],10) + parseInt(parts[7],10);
+      var name = parts[1].trim();
+      // Lookup team number. For duplicate names (e.g. two "Shenanigans"),
+      // the map holds the LAST one's number. We handle this by matching
+      // on flight: early Shenanigans = 1902, late Shenanigans = 3303.
+      var teamNum = TEAM_NUMBERS[name] || '';
       teams.push({
         flight: parts[0].trim().toLowerCase(),
-        name: parts[1].trim(),
+        name: name,
+        teamNum: teamNum,
         p1: parts[2].trim(), p1sl: parts[3].trim(),
         p2: parts[4].trim(), p2sl: parts[5].trim(),
         p3: parts[6].trim(), p3sl: parts[7].trim(),
         totalSL: totalSL
       });
     }
+    // Fix duplicate team names — "Shenanigans" appears twice (early=1902, late=3303)
+    // The map only stores one value. Manually fix by flight.
+    for (var j = 0; j < teams.length; j++) {
+      if (teams[j].name === 'Shenanigans' && teams[j].flight === 'early') teams[j].teamNum = 1902;
+      if (teams[j].name === 'Shenanigans' && teams[j].flight === 'late') teams[j].teamNum = 3303;
+      // "Chalk It Up" also appears twice — disambiguate
+      if (teams[j].name === 'Chalk It Up') {
+        // The first occurrence stays 604, second becomes 1903
+        // Check by player name to distinguish
+        if (teams[j].p1.indexOf('Krishnamurthy') !== -1) teams[j].teamNum = 1903;
+        else teams[j].teamNum = 604;
+      }
+    }
+    // Sort by team number
+    teams.sort(function(a, b) { return (a.teamNum || 9999) - (b.teamNum || 9999); });
     return teams;
   }
 
@@ -1046,10 +1114,11 @@ body {
         team.name.toLowerCase() + ' ' +
         team.p1.toLowerCase() + ' ' +
         team.p2.toLowerCase() + ' ' +
-        team.p3.toLowerCase()
+        team.p3.toLowerCase() + ' ' +
+        team.teamNum
       ) + '" data-flight="' + flightCls + '">' +
       '<div class="card-header">' +
-        '<span class="seed-badge">#' + (idx + 1) + '</span>' +
+        '<span class="seed-badge">#' + (team.teamNum || (idx + 1)) + '</span>' +
         '<span class="team-name">' + esc(team.name) +
           ' <span class="flight-badge ' + flightCls + '">' + flightLabel + '</span>' +
         '</span>' +
@@ -1156,7 +1225,7 @@ body {
       var t = threePersonTeams[i];
       csv += '\r\n' + [
         t.flight === 'early' ? 'Early' : 'Late',
-        i + 1,
+        t.teamNum || '',
         t.name,
         t.p1, t.p1sl,
         t.p2, t.p2sl,
