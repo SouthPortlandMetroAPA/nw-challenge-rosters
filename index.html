@@ -920,7 +920,7 @@ body {
     'Early\tHigh I Cues\tBrian Bancke\t7\tLei Kautzman\t5\tChris Wagner\t4',
     'Early\trUrowrAggy\tTracie "Le" Stedman-Falls\t3\tEric Stedman-Falls\t7\tMike Davis\t3',
     'Early\tUnsolicited Stick Pics\tBrian Tomlinson\t5\tAndrea Heitzman\t4\tPenny Wafford\t4',
-    'Early\tChalk It Up\tKrishnamurthy Ganesan\t6\tMargaret Goodman\t4\tToby delgato\t4',
+    'Early\tChalk is Cheap\tJames Lange\t?\tJason Bramble\t6\tJohn Gumataotao\t4',
     'Early\tThe Rack Pack\tCrystal Weisenborn\t3\tRobert Arkills\t5\tDakota French\t2',
     'Late\tWe\'re Your Huckleberries!\tJini Allen\t3\tSung Park\t6\tMani Ratsavong\t4',
     'Late\tCardin Nguyen\tCardin Nguyen\t7\tAlex Hoang\t5\tPuthea Pan\t4',
@@ -1027,7 +1027,7 @@ body {
     "We'll take it":301,'#1-POOLSHOCKERS':302,'China house':303,'Team Spirit':304,
     'Jaws, Tiger & The Skip':401,'The Jitter Inducers':402,'Lucky, Lucky':403,'Fish Stix':404,
     'High I Cues':501,'Spud life':502,'Strange Magic':503,'Do Better!':504,
-    'Just the 3 of us':601,'Marauding Merkins':602,"Renegade's":603,'Chalk It Up':604,
+    'Just the 3 of us':601,'Marauding Merkins':602,"Renegade's":603,'Chalk is Cheap':604,
     'The Rack Pack':701,'She Made Me Do It':702,'Misfit Toys':703,'Stick & Twisted':704,
     'Return the clipboard':801,'Tim-Hal-Dal':802,'Ballbarians':803,'Like, 3 uh... 3 Guys':804,
     'Fammered':901,'The Fearsome Threesome':902,'Easy-goers':903,'Ask Brady Baby.':904,
@@ -1094,13 +1094,7 @@ body {
     for (var j = 0; j < teams.length; j++) {
       if (teams[j].name === 'Shenanigans' && teams[j].flight === 'early') teams[j].teamNum = 1902;
       if (teams[j].name === 'Shenanigans' && teams[j].flight === 'late') teams[j].teamNum = 3303;
-      // "Chalk It Up" also appears twice — disambiguate
-      if (teams[j].name === 'Chalk It Up') {
-        // The first occurrence stays 604, second becomes 1903
-        // Check by player name to distinguish
-        if (teams[j].p1.indexOf('Krishnamurthy') !== -1) teams[j].teamNum = 1903;
-        else teams[j].teamNum = 604;
-      }
+      // "Chalk It Up" is now only team 1903 (604 was renamed to "Chalk is Cheap")
     }
     // Sort by team number
     teams.sort(function(a, b) { return (a.teamNum || 9999) - (b.teamNum || 9999); });
