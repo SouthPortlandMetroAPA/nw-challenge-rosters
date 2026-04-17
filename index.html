@@ -1110,6 +1110,72 @@ body {
   render3Person(threePersonTeams, 'grid-3-person', 'count-3-person');
   document.getElementById('search-3-person').addEventListener('input', apply3PFilter);
 
+  /* =====================================================================
+     Admin export: show export buttons when ?key=admin is in the URL.
+     Exports 3-Person roster as CSV with flight, team#, team name,
+     player names + SLs.
+     ===================================================================== */
+  var adminKey = new URLSearchParams(window.location.search).get('key');
+  if (adminKey === 'admin') {
+    // Show export buttons in each panel's toolbar
+    var eb3Btn = document.createElement('button');
+    eb3Btn.className = 'flight-pill';
+    eb3Btn.textContent = '\u2B07 Export 3P CSV';
+    eb3Btn.style.marginLeft = 'auto';
+    eb3Btn.onclick = function() { export3PCSV(); };
+    document.querySelector('#panel-3-person .toolbar').appendChild(eb3Btn);
+
+    var ebBtn = document.createElement('button');
+    ebBtn.className = 'flight-pill';
+    ebBtn.textContent = '\u2B07 Export EB CSV';
+    ebBtn.style.marginLeft = 'auto';
+    ebBtn.onclick = function() { exportEBCSV(); };
+    document.querySelector('#panel-early-bird .controls').appendChild(ebBtn);
+  }
+
+  function csvQ(v) {
+    if (v == null) return '';
+    var s = String(v);
+    if (/[",\r\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+
+  function downloadCSV(filename, csv) {
+    var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  window.export3PCSV = function() {
+    var headers = ['Flight','Team #','Team Name','Player 1','P1 SL','Player 2','P2 SL','Player 3','P3 SL'];
+    var csv = headers.map(csvQ).join(',');
+    for (var i = 0; i < threePersonTeams.length; i++) {
+      var t = threePersonTeams[i];
+      csv += '\r\n' + [
+        t.flight === 'early' ? 'Early' : 'Late',
+        i + 1,
+        t.name,
+        t.p1, t.p1sl,
+        t.p2, t.p2sl,
+        t.p3, t.p3sl
+      ].map(csvQ).join(',');
+    }
+    downloadCSV('3_person_roster_' + new Date().toISOString().slice(0,10) + '.csv', csv);
+  };
+
+  window.exportEBCSV = function() {
+    var headers = ['Team #','Team Name','Combined SL','Player 1','Player 2'];
+    var csv = headers.map(csvQ).join(',');
+    for (var i = 0; i < earlyBirdTeams.length; i++) {
+      var t = earlyBirdTeams[i];
+      csv += '\r\n' + [t.seed, t.name, t.sl, t.player1, t.player2].map(csvQ).join(',');
+    }
+    downloadCSV('early_bird_roster_' + new Date().toISOString().slice(0,10) + '.csv', csv);
+  };
+
   // Activate tab from hash, default to early-bird
   var initHash = location.hash.replace('#', '') || 'early-bird';
   activateTab(initHash);
