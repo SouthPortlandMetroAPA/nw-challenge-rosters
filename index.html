@@ -322,6 +322,20 @@ body {
 .flight-badge.early { background: #1b5e20; color: #c8e6c9; }
 .flight-badge.late { background: #1a237e; color: #c5cae9; }
 
+/* "Advanced to 64 Board" emphasis — applied to the whole card and an inline badge */
+.team-card.advanced-64 {
+  border-color: var(--primary);
+  border-width: 2px;
+  padding: 15px;                                   /* keep visual size identical */
+  background: linear-gradient(180deg, #fffbe9 0%, #fff 80%);
+  box-shadow: 0 2px 10px rgba(194, 178, 128, 0.35);
+}
+.flight-badge.advance-64 {
+  background: var(--primary);
+  color: #000;
+  letter-spacing: 0.08em;
+}
+
 /* Flight filter pills */
 .flight-filter {
   display: flex;
@@ -469,6 +483,7 @@ body {
       <button type="button" class="flight-pill active" data-flight="all" onclick="filter3P('all',this)">All</button>
       <button type="button" class="flight-pill" data-flight="early" onclick="filter3P('early',this)">Early Flight</button>
       <button type="button" class="flight-pill" data-flight="late" onclick="filter3P('late',this)">Late Flight</button>
+      <button type="button" class="flight-pill active" id="pill-advance-64" onclick="toggleAdvance64(this)" title="Show only teams that have advanced to the 64 Board">&#11088; 64 Board</button>
     </div>
     <span class="team-count" id="count-3-person"></span>
   </div>
@@ -1313,6 +1328,22 @@ body {
 
 
 /* =====================================================================
+     3-Person teams that have advanced to the 64 Board.
+     Keyed by team number (4-digit; first two digits are the flight
+     position). The team number is the source of truth — team names
+     aren't used because duplicate names exist (e.g. Shenanigans 1 / 2).
+     ===================================================================== */
+  var ADVANCED_64 = new Set([
+    3604, 3703,  303, 1001, 2503,  902, 3303, 3302, 2401, 3801,
+    1002,  104,  504, 2102, 1703, 2004, 1201,  203,  304,  103,
+     603, 1803, 1104, 2303,  204,  901, 2601, 3003,  803,  602,
+    3004,  404, 3104, 3504, 2301, 1302, 3602,  804, 1301, 3404,
+     402, 2802, 1704, 2001, 1204, 3203, 2904, 3904, 2804, 3502,
+    2901, 1404, 2403, 2701, 1403,  702, 1501, 3702, 1902, 2604,
+    1601,  502, 3803, 2204
+  ]);
+
+  /* =====================================================================
      Parse 3-person data into structured objects.
      ===================================================================== */
   function parse3Person(rawLines) {
@@ -1335,7 +1366,8 @@ body {
         p1: parts[2].trim(), p1sl: parts[3].trim(),
         p2: parts[4].trim(), p2sl: parts[5].trim(),
         p3: parts[6].trim(), p3sl: parts[7].trim(),
-        totalSL: totalSL
+        totalSL: totalSL,
+        advanced64: !!(teamNum && ADVANCED_64.has(teamNum))
       });
     }
     // Duplicate team names now have explicit suffixes (Shenanigans 1/2, etc.)
@@ -1348,17 +1380,23 @@ body {
   function card3PHTML(team, idx) {
     var flightCls = team.flight === 'early' ? 'early' : 'late';
     var flightLabel = team.flight === 'early' ? 'Early' : 'Late';
-    return '<div class="team-card" data-search="' + escAttr(
+    var advancedCls = team.advanced64 ? ' advanced-64' : '';
+    var advancedAttr = team.advanced64 ? 'yes' : 'no';
+    var advancedBadge = team.advanced64
+      ? ' <span class="flight-badge advance-64" title="Advanced to 64 Board">\u2B50 64</span>'
+      : '';
+    return '<div class="team-card' + advancedCls + '" data-search="' + escAttr(
         team.name.toLowerCase() + ' ' +
         team.p1.toLowerCase() + ' ' +
         team.p2.toLowerCase() + ' ' +
         team.p3.toLowerCase() + ' ' +
         team.teamNum
-      ) + '" data-flight="' + flightCls + '">' +
+      ) + '" data-flight="' + flightCls + '" data-advanced="' + advancedAttr + '">' +
       '<div class="card-header">' +
         '<span class="seed-badge">#' + (team.teamNum || (idx + 1)) + '</span>' +
         '<span class="team-name">' + esc(team.name) +
           ' <span class="flight-badge ' + flightCls + '">' + flightLabel + '</span>' +
+          advancedBadge +
         '</span>' +
       '</div>' +
       '<div class="card-players">' +
@@ -1381,16 +1419,25 @@ body {
   }
 
   var current3PFlight = 'all';
+  var advance64Only = true;            // 64-Board filter — ACTIVE BY DEFAULT
   var threePersonTeams = parse3Person(RAW_3_PERSON);
 
   window.filter3P = function(flight, btn) {
     current3PFlight = flight;
-    var pills = document.querySelectorAll('.flight-filter .flight-pill');
+    // Only toggle the three flight pills (All/Early/Late), leave the 64-Board pill alone.
+    var pills = document.querySelectorAll('.flight-filter .flight-pill[data-flight]');
     for (var i = 0; i < pills.length; i++) {
       pills[i].classList.toggle('active', pills[i].getAttribute('data-flight') === flight);
     }
     apply3PFilter();
   }
+
+  /** Toggle the "Advanced to 64 Board" filter on/off. */
+  window.toggleAdvance64 = function(btn) {
+    advance64Only = !advance64Only;
+    btn.classList.toggle('active', advance64Only);
+    apply3PFilter();
+  };
 
   function apply3PFilter() {
     var grid = document.getElementById('grid-3-person');
@@ -1398,9 +1445,10 @@ body {
     var q = (document.getElementById('search-3-person').value || '').toLowerCase().trim();
     var visible = 0;
     for (var i = 0; i < cards.length; i++) {
-      var matchFlight = current3PFlight === 'all' || cards[i].getAttribute('data-flight') === current3PFlight;
-      var matchSearch = !q || cards[i].getAttribute('data-search').indexOf(q) !== -1;
-      var show = matchFlight && matchSearch;
+      var matchFlight  = current3PFlight === 'all' || cards[i].getAttribute('data-flight') === current3PFlight;
+      var matchSearch  = !q || cards[i].getAttribute('data-search').indexOf(q) !== -1;
+      var matchAdvance = !advance64Only || cards[i].getAttribute('data-advanced') === 'yes';
+      var show = matchFlight && matchSearch && matchAdvance;
       cards[i].style.display = show ? '' : 'none';
       if (show) visible++;
     }
@@ -1420,6 +1468,8 @@ body {
 
   render3Person(threePersonTeams, 'grid-3-person', 'count-3-person');
   document.getElementById('search-3-person').addEventListener('input', apply3PFilter);
+  // Apply the default 64-Board filter on initial load so only advanced teams show.
+  apply3PFilter();
 
   /* =====================================================================
      Admin export: show export buttons when ?key=admin is in the URL.
