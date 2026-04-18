@@ -479,11 +479,17 @@ body {
      Weekender Panel
      ==================================================================== -->
 <section class="tab-panel" id="panel-weekender" role="tabpanel" aria-labelledby="tab-weekender">
-  <div class="placeholder">
-    <div class="placeholder-icon" aria-hidden="true">&#127993;</div>
-    <h2>Weekender Scotch Doubles</h2>
-    <p>Rosters coming soon. Check back later!</p>
+  <div class="controls">
+    <div class="search-row">
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true">&#128269;</span>
+        <input type="search" class="search-box" id="search-weekender"
+               placeholder="Search by team or player name..." aria-label="Search teams">
+      </div>
+      <span class="team-count" id="count-weekender"></span>
+    </div>
   </div>
+  <div class="roster-grid" id="grid-weekender"></div>
 </section>
 
 <!-- ====================================================================
@@ -695,6 +701,142 @@ body {
     '#190 Married Downtown Browns SL 7\tAmy Brown\tDion Brown',
     '#191 Oops sorry babe SL 9\tShawn Kellar\tJessica Kellar',
     '#192 Double Shots SL 9\tLarry Gee\tOnessia Elliott'
+  ];
+
+  /* =====================================================================
+     Weekender Scotch Doubles roster data.
+     Format per line: #SEED TeamName SL N\tPlayer1\tPlayer2
+     (SL here is the combined team skill level.)
+     ===================================================================== */
+  var RAW_WEEKENDER = [
+    '#1 The Carl\'s SL 6\tCarleen Natividad\tCarl Bunting',
+    '#2 Hen House Hustlers SL 8\tKaren Laksamana\tJackie McCabe',
+    '#3 Can You Hear Me Now? SL 10\tTerri Riley\tEric Stewart',
+    '#4 Cupcake SL 9\tJimmy Arellanes\tTracy Stewart',
+    '#5 Double Clam Slam SL 11\tDana German\tJennifer Giller',
+    '#6 We\'re Outa Here SL 10\tMickey Restivo\tPetra Moser',
+    '#7 Get rackin SL 11\tDustin Wyatt\tKevin Haevischer',
+    '#8 Yippee Ki Yay SL 11\tTerry McCurdy\tPhanindra reddy Madduru',
+    '#9 Pool Dancera SL 7\tAprile Hall\tJessica Nikolas',
+    '#10 Big & Smallz SL 8\tShaun "Country" Welliver\tChaylene Verschoor',
+    '#11 RV There Yet? SL 10\tChris Peterson\tNichole Peterson',
+    '#12 Hooked Again!!! SL 7\tKim Toney\tHarry Toney',
+    '#13 Chalk is Cheap SL 10\tBryon Burleigh\tJoy Pierson',
+    '#14 Wrecking Balls SL 11\tRon Sohnrey\tCaiti Hupp',
+    '#15 Smash&Crash SL 9\tMarcos Morales\tVance',
+    '#16 Gettin\' Lucky SL 11\tStacie Larson\tJimmy Farmer',
+    '#17 I have no idea! SL 7\tDesi Oberman\tMargarita Torres',
+    '#18 OK WHERE WE AT? SL 10\tSTEPHEN CHANDLER\tHANNAH GELOK',
+    '#19 Spins and Rolls SL 6\tScott Henry\tJanet Henry',
+    '#20 Chips and Rice SL 11\tRachel Draper\tCorey Sizemore',
+    '#21 EARL\'S JAM SL 10\tGLYN JENKINS\tEARL SMITH',
+    '#22 CUE\'S-R-US SL 9\tBrad Hinkle\tFelix Briceno Alvaro',
+    '#23 Bustn\u2019balls SL 11\tOlivia Remington\tTim Cowlthorp',
+    '#24 Aura Cookers SL 8\tNadya Bobrova\tCarl Maier',
+    '#25 We Take Turns SL 10\tRobert Crowley\tNate Lannoye',
+    '#26 Here for the Beer SL 10\tKathi Nakama\tRobert Vinson',
+    '#27 Butterfinger SL 9\tAaron Allen\tBrandon Buckley',
+    '#28 Wicked Shot SL 11\tKevin Blodgett\tKaren Blodgett',
+    '#29 Git Some! SL 10\tAshley Mileski\tLionel Duffus',
+    '#30 Lags to Riches SL 10\tJeffrey Weston\tRay Ivey',
+    '#31 GrayBeards SL 7\tMark Shanbeck\tRobert Trapp',
+    '#32 Chalk It Up SL 9\tDerek Fox\tMichaelalisson Da Silva',
+    '#33 Hungry Hungry Hippos SL 8\tJeremy Cox\tVal Bowlin',
+    '#34 #1-POOLSHOCKERS SL 9\tSTEVE BRADLEY\tDAN WINFREE',
+    '#35 #3-POOLSHOCKERS SL 8\tMIKE VOYTKO\tCONNIE PETERSON',
+    '#36 #4-POOLSHOCKERS SL 6\tSUE WINFREE\tDIANE BRADLEY',
+    '#37 Lovebirds SL 10\tAllison Namba\tCharlie Namba',
+    '#38 Nacho Pimp SL 10\tScott Black\tVeronica Weinhart',
+    '#39 Rack and Run SL 9\tShemal Medawattage\tLina Blinova',
+    '#40 Uno more 8 ball SL 11\tChad dyess\tMario Chavez',
+    '#41 BanFam SL 7\tAlexander Bancroft\tShannon Bancroft',
+    '#42 Lazy Taters SL 10\tMichael Yung\tTiffany Blahut',
+    '#43 Married Downtown Browns SL 7\tAmy Brown\tDion (Ty) Brown',
+    '#44 Two Tinkles SL 7\tAimee Tinkle\tKim Harmon',
+    '#45 Fire & Ice SL 8\tFixxxer Cowley\tTinkerbell cowley',
+    '#46 The J-Team SL 10\tJen Dotson\tJackie Wardlaw',
+    '#47 Made one SL 9\tDyana Mitchell\tWayne Wakabayashi',
+    '#48 Twisted Sisters SL 7\tSadie Cordell\tTiffany Moen',
+    '#49 Hit or Miss SL 7\tScott George\tJulie Maslen',
+    '#50 Chalk Norris SL 7\tDavid Hake\tNeil Verkland',
+    '#51 Silk Road Shooters SL 11\tAlex Hoang\tKrishnamurthy Ganesan',
+    '#52 Killer Bunnies SL 11\tMelinda Coker\tRandy Ruegsegger',
+    '#53 Pocket Queens SL 11\tGia Pitillo\tMichaela Danner',
+    '#54 JackAsh SL 7\tAshley Clement\tJack Malone',
+    '#55 The Villian Club SL 9\tTom Benneche\tPatrick Barney',
+    '#56 Stroke & Hope SL 10\tCody Gray\tSean Mcdonough',
+    '#57 Team fantastic SL 9\tPatrick Casey\tSteve leckie',
+    '#58 Team Ludacris SL 9\tJohn Karleskint\tTiffany Meyer',
+    '#59 Story of My Life SL 10\tMatthew Tofte\tGrant Walstrom',
+    '#60 Wasted Wages SL 11\tMickel Yost\tKaiden Campbell',
+    '#61 Who cares SL 9\tRobin Adams\tMelinda Tuve',
+    '#62 Hit It & Quit It SL 10\tChris Moe\tBrad Gallogly',
+    '#63 CueingUpTrouble SL 10\tJesse Jensen\tKaitlin Costa',
+    '#64 Meow SL 9\tPatricia "Patty" Mendoza\tMilianne Chin',
+    '#65 Felt up SL 10\tJarrod runion\tNick brown',
+    '#66 Sorry about the leave SL 10\tSheri Roberts\tCharles Roberts',
+    '#67 CR Shots SL 9\tCody Poindexter\tRian Devore',
+    '#68 Twice Baked SL 9\tEvelyn Hazlett\tVanessa Baldwin',
+    '#69 Candy Cartel SL 6\tKristi Corcoran\tKim Kruse',
+    '#70 Grateful deadpool SL 5\tGerardo Garcia\tMark koch',
+    '#71 Grateful Spread SL 10\tArsalan Darby\tFarid Yamin',
+    '#72 Dangerous Cues SL 11\tKristin Cambas\tKim Allen Moyak',
+    '#73 Nah I\'d Win SL 6\tTyler Brost\tTyler Stratton',
+    '#74 This is the way SL 11\tSean fuller\tKyle Anderson',
+    '#75 Ask Brady SL 10\tNirmal peters\tBrady Gutierrez',
+    '#76 Get in your hole! SL 9\tJanet Harrell\tBrian Carlson',
+    '#77 Sharp Shooters SL 10\tMarlena Thompson\tDennis Worsham',
+    '#78 Tapped Out SL 10\tOmar\tBeau Spencer',
+    '#79 Whiskey & Wine SL 7\tJeremy Dickey\tJennifer VanScoyk',
+    '#80 CG Express SL 6\tGary Conkey\tCaleb Prieger',
+    '#81 Purrrrrfect Break SL 6\tRebecca Hanset\tGrace Hanset',
+    '#82 Ooops Sorry BABE SL 9\tShawn Kellar\tJessica Kellar',
+    '#83 That\'s Our Cue SL 8\tMaddie Klemonsky\tChris Brace',
+    '#84 Men of the Cloth SL 7\tJames Weishan\tErik Wenger',
+    '#85 Unsupervised SL 9\tJarrod Adams\tKevin Sumlin',
+    '#86 Chick & a Stick #1 SL 6\tThomas Machen\tPatricia Deitz',
+    '#87 Chick & a Stick #2 SL 8\tKenneth Morgan\tSandra Downey',
+    '#88 Chick & a Stick #3 SL 6\tMike Lewandowski\tHazel O\'Connor',
+    '#89 Gordy talks to Strangers SL 9\tGordon Nyhus\tToby Roberts',
+    '#90 4UH8TER$ SL 8\tKristina Bell\tKenny Roberts',
+    '#91 More Passion SL 9\tKrystal Andres\tJosh Cutlip',
+    '#92 Dude, Where\'s My Cue? SL 8\tCrystal Weisenborn\tObed Sanchez',
+    '#93 Motley Cues SL 7\tJacob Giberson\tRed Burns',
+    '#94 Spin Doctors SL 7\tAndie Furtado\tColleen Sly',
+    '#95 Measure Twice SL 8\tJordache Hutto\tGargoyle Myhre',
+    '#96 Rock Steady SL 9\tJimmi\tElise',
+    '#97 Otter Chaos SL 9\tTravis Heryla\tWanda Massey',
+    '#98 Plan Z SL 6\tSARAH MAXEY\tZachary Koenig',
+    '#99 Tiger & The Skip SL 10\tShane Mulhern\tPrashanth Gunda',
+    '#100 Jagerbombers SL 11\tKen Talbert\tCody McGlin',
+    '#101 Nervous Rex SL 7\tMichael Bostwick\tAngela Miller',
+    '#102 Coasties SL 11\tLisa Petersen\tBlake Adair',
+    '#103 Too Soon SL 10\tAaron Donaldson\tCarl McCauley',
+    '#104 Still Too Soon SL 10\tCainan Mullins\tRichard Stirgus',
+    '#105 Clipboard thieves SL 10\tMichael Fisher\tJared cornman',
+    '#106 No Hair Don\'t Care SL 10\tElvin Estrella\tGary Del Rosario',
+    '#107 Let\'s do this SL 10\tStacy Enriquez\tCary horton',
+    '#108 Balls & Bae SL 6\tSophie Larson\tObie Gomez',
+    '#109 Cold stroke killers SL 10\tTommy\tJustin willhite',
+    '#110 Pocket 9 & 3/4 SL 4\tMary Stroud\tAndrew Stroud',
+    '#111 War and Peace SL 8\tSara Vaughn\tBrad Vaughn',
+    '#112 aAaaaaaH-HaaaAAaaA SL 10\tSung Park\tMani Ratsavong',
+    '#113 Two pump chumps SL 10\tJames pope\tCameron mcclure',
+    '#114 This is the way SL 11\tSean filler\tKyle anderson',
+    '#115 Jeremy\'s fault SL 10\tVaighn Lee\tThomas Kokinos',
+    '#116 Pocket Monsters SL 8\tAnne Gambrel\tHalie Halberson',
+    '#117 Toker And Poker SL 7\tJacob Braun\tPatrick Churchill',
+    '#118 two musketeers SL 9\tJames Santucci\tOmar Shahin',
+    '#119 Early Ohana SL 9\tKiana Early\tLeroy Early',
+    '#120 In church SL 8\tNicholas Coll\tMarlena Thompson',
+    '#121 Pastime SL 10\tClint Petty\tJeffrey Hamilton',
+    '#122 Bandits SL 8\tNoe\tSophia',
+    '#123 Pocket Monsters SL 8\tMackenzie Hornych\tRobert Skelton',
+    '#124 Albany Aces SL 10\tSteven Burns\tMichael Papenfus',
+    '#125 All 4 Chinookie SL 11\tBryan Chin\tDerek Ramsey',
+    '#126 Alan and a chickmunk SL 8\tLarry Moccardine\tDeana Nerton',
+    '#127 Cowboy & RedDot SL 11\tRajeev Goonie\tAlex Sherry',
+    '#128 Sally sells sea shells SL 0\tAlden Elias\tAlea Corbin'
   ];
 
   /* =====================================================================
@@ -1272,6 +1414,10 @@ body {
   renderRoster(earlyBirdTeams, 'grid-early-bird', 'count-early-bird');
   setupSearch('search-early-bird', 'grid-early-bird', 'count-early-bird');
 
+  var weekenderTeams = parseRoster(RAW_WEEKENDER);
+  renderRoster(weekenderTeams, 'grid-weekender', 'count-weekender');
+  setupSearch('search-weekender', 'grid-weekender', 'count-weekender');
+
   render3Person(threePersonTeams, 'grid-3-person', 'count-3-person');
   document.getElementById('search-3-person').addEventListener('input', apply3PFilter);
 
@@ -1296,6 +1442,13 @@ body {
     ebBtn.style.marginLeft = 'auto';
     ebBtn.onclick = function() { exportEBCSV(); };
     document.querySelector('#panel-early-bird .controls').appendChild(ebBtn);
+
+    var wkBtn = document.createElement('button');
+    wkBtn.className = 'flight-pill';
+    wkBtn.textContent = '\u2B07 Export Weekender CSV';
+    wkBtn.style.marginLeft = 'auto';
+    wkBtn.onclick = function() { exportWeekenderCSV(); };
+    document.querySelector('#panel-weekender .controls').appendChild(wkBtn);
   }
 
   function csvQ(v) {
@@ -1339,6 +1492,16 @@ body {
       csv += '\r\n' + [t.seed, t.name, t.sl, t.player1, t.player2].map(csvQ).join(',');
     }
     downloadCSV('early_bird_roster_' + new Date().toISOString().slice(0,10) + '.csv', csv);
+  };
+
+  window.exportWeekenderCSV = function() {
+    var headers = ['Team #','Team Name','Combined SL','Player 1','Player 2'];
+    var csv = headers.map(csvQ).join(',');
+    for (var i = 0; i < weekenderTeams.length; i++) {
+      var t = weekenderTeams[i];
+      csv += '\r\n' + [t.seed, t.name, t.sl, t.player1, t.player2].map(csvQ).join(',');
+    }
+    downloadCSV('weekender_roster_' + new Date().toISOString().slice(0,10) + '.csv', csv);
   };
 
   // Activate tab from hash, default to early-bird
